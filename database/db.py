@@ -29,6 +29,7 @@ def create_main_tables():
     command = '''CREATE TABLE IF NOT EXISTS note 
     (id INTEGER PRIMARY KEY AUTOINCREMENT, 
     description varchar(50),
+    completed bool,
     id_category int, 
     FOREIGN KEY (id_category) REFERENCES CLIENTS (id))'''
     cursor.execute(command)

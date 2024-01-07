@@ -1,3 +1,3 @@
 TELEGRAM_TOKEN = "6823912920:AAHXBDB1CH9MakqDYO2ihyhtx2Ye_PeLcYQ"
-NGROK_TUNNEL_URL = "https://391b-85-140-92-106.ngrok-free.app"
+NGROK_TUNNEL_URL = "https://df35-85-140-92-82.ngrok-free.app"
 DATABASE_NAME = "SecretaryDB.sql"

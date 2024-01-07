@@ -12,12 +12,10 @@ dp.include_routers(note_contoller.router)
 async def start_command_handler(message: types.Message):
     replay_key_buttons = [
         [types.KeyboardButton(text="/categories") ],
-        [types.KeyboardButton(text="/create_category")]
     ]
     markup = types.ReplyKeyboardMarkup(keyboard=replay_key_buttons)
     await bot.send_message(message.chat.id, "Вас приветсвует ваш личный Секретарь", reply_markup=markup)
     
-
 
 # async def main() -> None:
 #     # Initialize Bot instance with a default parse mode which will be passed to all API calls
