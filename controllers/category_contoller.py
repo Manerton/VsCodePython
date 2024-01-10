@@ -4,14 +4,17 @@ from aiogram.filters import Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from database.category_repository import get_all_categories, get_categories_by_name, insert_category
+from database.category_repository import get_all_categories, get_categories_by_name, insert_category, delete_category
 from create_bot import bot
-from controllers.note_contoller import get_all_notes
+from controllers.note_contoller import get_all_notes, delete_note
 
 router = Router()
 
 class CreatingCategory(StatesGroup):
     choosing_name = State()
+
+class DeletingCategory(StatesGroup):
+    confirm_selection = State()
 
 
 @router.message(Command("categories"))
@@ -62,3 +65,22 @@ async def set_name(message: types.Message, state: FSMContext):
     await state.clear()
     await display_all_categories(message)
     
+delete_category_id = -1
+    
+@router.callback_query(F.data.startswith("deletecategoryid_"))
+async def create_new_category(callback: types.CallbackQuery, state: FSMContext):
+    global delete_category_id
+    delete_category_id = callback.data.split("_")[1]
+    await state.set_state(DeletingCategory.confirm_selection)
+    await bot.send_message(callback.message.chat.id, "Вы уверены (Y/N):")
+    
+@router.message(DeletingCategory.confirm_selection)
+async def set_name(message: types.Message, state: FSMContext):
+    all_notes = get_all_notes(delete_category_id)
+    for note in all_notes:
+        id = note[0]
+        delete_note(id)
+    delete_category(delete_category_id)
+    await bot.send_message(message.chat.id, f"Категория удалена")
+    await state.clear()
+    await display_all_categories(message)    
