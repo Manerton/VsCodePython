@@ -45,7 +45,7 @@ def category_keyboard_menu(main_builder: InlineKeyboardBuilder = None):
 
 # Создание новой категории шаг 1 - Ввод названия категории
 @router.callback_query(F.data == "create_category")
-async def create_new_category(callback: types.CallbackQuery, state: FSMContext):
+async def callbacks_create_new_category(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(CreatingCategory.choosing_name)
     await bot.send_message(callback.message.chat.id, "Введите название категории!")
 
@@ -67,7 +67,7 @@ delete_category_id = -1
     
 # Удаление категории шаг 1 - повторное потверждение от пользователя
 @router.callback_query(F.data.startswith("deletecategoryid_"))
-async def create_new_category(callback: types.CallbackQuery, state: FSMContext):
+async def callbacks_delete_category_step_1(callback: types.CallbackQuery, state: FSMContext):
     global delete_category_id
     delete_category_id = callback.data.split("_")[1]
     await state.set_state(DeletingCategory.confirm_selection)
@@ -75,7 +75,7 @@ async def create_new_category(callback: types.CallbackQuery, state: FSMContext):
 
 # Удаление категории шаг 1 - Удаление категории со всеми записями
 @router.message(DeletingCategory.confirm_selection)
-async def set_name(message: types.Message, state: FSMContext):
+async def delete_category_step_2(message: types.Message, state: FSMContext):
     message_text = message.text
     if str.lower(message_text) != 'y':
         await bot.send_message(message.chat.id, f"Удаление отменено")

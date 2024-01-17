@@ -120,13 +120,13 @@ async def callbacks_notes_for_switch_complete_note(callback: types.CallbackQuery
 
 # Создание новой записи шаг 1 - инициализация ввода записи
 @router.callback_query(F.data == "create_note")
-async def callbacks_notes_for_category(callback: types.CallbackQuery, state: FSMContext):
+async def callbacks_created_note_step_1(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(CreatingNote.choosing_desc)
     await bot.send_message(callback.message.chat.id, "Ожидается ввод записи...")
 
 # Создание новой записи шаг 2 - создание записи
 @router.message(CreatingNote.choosing_desc)
-async def set_name(message: types.Message, state: FSMContext):
+async def created_note_step_2(message: types.Message, state: FSMContext):
     description = message.text
     new_category = Note(now_id, description)
     insert_note(new_category)
