@@ -1,12 +1,12 @@
+from DTO.category_dto import CategoryPostDTO
 from controllers.sub_classes import CategoryCallbackFactory, CreatingCategory, DeletingCategory
-from mytypes.category import Category
 from aiogram import types, Router, F
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from database.category_repository import get_all_categories, get_categories_by_name, insert_category, delete_category
+from database.category_repository import CategoryRepositoryOrm
+from DTO.category_dto import CategoryDTO
+
 from create_bot import bot
-from controllers.note_contoller import get_all_notes, delete_note
 
 router = Router()
 
@@ -15,21 +15,23 @@ async def callback_categories(callback: types.CallbackQuery):
     await display_all_categories(callback.message)
 
 async def display_all_categories(message: types.Message):
-    categories = get_all_categories()
+    categories = CategoryRepositoryOrm.get_all_categories()
     builder = InlineKeyboardBuilder()
+    text_message = ""
     if categories is None or not categories:
-        await bot.send_message(message.chat.id, "Список пуст")
-        return 
-    builder = creating_buttons_for_all_categories(categories)
+        text_message = "Список пуст"
+    else:
+        text_message = "Список категорий"
+        builder = creating_buttons_for_all_categories(categories)
     builder = category_keyboard_menu(builder)
-    await bot.send_message(message.chat.id, "Список категорий", reply_markup=builder.as_markup())
+    await bot.send_message(message.chat.id, text_message, reply_markup=builder.as_markup())
     
 # Создание кнопок для всех категорий для дальнейшего взаимодействия
-def creating_buttons_for_all_categories(categories: tuple):
+def creating_buttons_for_all_categories(categories: list[CategoryDTO]):
     builder = InlineKeyboardBuilder()
     for category in categories:
-        id = category[0]
-        name = category[1]
+        id = category.id
+        name = category.name
         builder.button(text=name, callback_data=CategoryCallbackFactory(id=id, name=name))
     builder.adjust(1)
     return builder
@@ -53,12 +55,13 @@ async def callbacks_create_new_category(callback: types.CallbackQuery, state: FS
 @router.message(CreatingCategory.choosing_name)
 async def set_name(message: types.Message, state: FSMContext):
     name = message.text
-    temp_category = get_categories_by_name(name)
+    temp_category = CategoryRepositoryOrm.get_category_by_name(name)
     if temp_category:
         await bot.send_message(message.chat.id, f"Категория {temp_category[1]} уже существует")
         return
-    new_category = Category(name)
-    insert_category(new_category)
+    print(name)
+    new_category = CategoryPostDTO(name=name)
+    CategoryRepositoryOrm.insert_category(new_category)
     await bot.send_message(message.chat.id, f"Создана категория {name}")
     await state.clear()
     await display_all_categories(message)
@@ -69,7 +72,7 @@ delete_category_id = -1
 @router.callback_query(F.data.startswith("deletecategoryid_"))
 async def callbacks_delete_category_step_1(callback: types.CallbackQuery, state: FSMContext):
     global delete_category_id
-    delete_category_id = callback.data.split("_")[1]
+    delete_category_id = int(callback.data.split("_")[1])
     await state.set_state(DeletingCategory.confirm_selection)
     await bot.send_message(callback.message.chat.id, "Вы уверены (Y/N):")
 
@@ -80,11 +83,7 @@ async def delete_category_step_2(message: types.Message, state: FSMContext):
     if str.lower(message_text) != 'y':
         await bot.send_message(message.chat.id, f"Удаление отменено")
     else:
-        all_notes = get_all_notes(delete_category_id)
-        for note in all_notes:
-            id = note[0]
-            delete_note(id)
-        delete_category(delete_category_id)
+        CategoryRepositoryOrm.delete_category(delete_category_id)
         await bot.send_message(message.chat.id, f"Категория удалена")
     await state.clear()
     await display_all_categories(message)    

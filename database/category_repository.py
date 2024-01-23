@@ -1,31 +1,57 @@
-from database.db import execute_sql_command_without_res, execute_sql_command_with_res
-from mytypes.category import Category
+# from database.db import execute_sql_command_without_res, execute_sql_command_with_res
+from database.db import sync_session
+from sqlalchemy import insert, update, delete, select
+from mytypes.category import CategoryOrm
+from DTO.category_dto import CategoryDTO
+from DTO.category_dto import CategoryPostDTO
 
-# Возвращает все категории
-def get_all_categories():
-    command = f"SELECT * FROM category"
-    res = execute_sql_command_with_res(command)
-    return res
 
-# Возвращает контретную категорию по id
-def get_categories_by_id(categories_id: int):
-    command = f"SELECT * FROM category WHERE id={categories_id}"
-    res = execute_sql_command_with_res(command)
-    return res
-
-# Возвращает контретную категорию по названию
-def get_categories_by_name(name: str):
-    command = f"SELECT * FROM category WHERE name=\"{name}\""
-    res = execute_sql_command_with_res(command)
-    return res
-
-# Добавляет категорию в таблицу
-def insert_category(category: Category):
-    command = f"INSERT INTO category (name) VALUES (\"{category.name}\")"
-    execute_sql_command_without_res(command)
-    
-# Удаляет категорию из таблицы
-def delete_category(category_id: int):
-    command = f"DELETE FROM category WHERE id={category_id}"
-    # При удалении категории нужно удалить все записи в этой категории
-    execute_sql_command_without_res(command)
+class CategoryRepositoryOrm:
+    @staticmethod 
+    # Возвращает все категории
+    def get_all_categories():
+        with sync_session() as session:
+            query = select(CategoryOrm)
+            res = session.execute(query)
+            if res is None:
+                return
+            categories = res.scalars().all()
+            categories_dto = [CategoryDTO.model_validate(row, from_attributes=True) for row in categories]
+            return categories_dto
+        
+    @staticmethod
+    # Возвращает контретную категорию по id
+    def get_category_by_id(category_id: int) -> CategoryDTO:
+        with sync_session() as session:
+            query = select(CategoryOrm).filter_by(id=category_id)    
+            res = session.execute(query).one_or_none()
+            category = CategoryDTO.model_validate(res[0], from_attributes=True)
+            return category
+        
+    @staticmethod
+    # Возвращает контретную категорию по названию
+    def get_category_by_name(category_name: str) -> CategoryDTO:
+        with sync_session() as session:
+            query = select(CategoryOrm).filter_by(name=category_name)
+            res = session.execute(query).one_or_none()
+            if res is None:
+                return None
+            category = CategoryDTO.model_validate(res[0], from_attributes=True)
+            return category
+        
+    @staticmethod
+    # Добавляет категорию в таблицу
+    def insert_category(category: CategoryPostDTO):
+        now_category = CategoryOrm(name=category.name)
+        with sync_session() as session:
+            session.add(now_category)
+            session.commit()
+            
+    @staticmethod
+    # Удаляет категорию из таблицы
+    def delete_category(category_id: int):
+        with sync_session() as session:
+            query = delete(CategoryOrm).filter_by(id=category_id)
+            session.execute(query)
+            session.commit()
+            

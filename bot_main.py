@@ -19,7 +19,3 @@ async def start_command_handler(message: types.Message):
     btn = types.InlineKeyboardButton(text="Показать список категорий", callback_data="categories")
     builder.add(btn)
     await bot.send_message(message.chat.id, "Меню:", reply_markup=builder.as_markup())
-# async def main() -> None:
-#     # Initialize Bot instance with a default parse mode which will be passed to all API calls
-#     # And the run events dispatching
-#     await dp.start_polling(bot)

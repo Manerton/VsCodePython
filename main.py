@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from aiogram import types
 from create_bot import bot, dp
-from database.db import create_main_tables
+from database.db import OrmStart
 from config import TELEGRAM_TOKEN, NGROK_TUNNEL_URL
 import bot_main
 
@@ -12,7 +12,7 @@ WEBHOOK_URL = f"{NGROK_TUNNEL_URL}{WEBHOOK_PATH}"
 
 async def lifespan(app: FastAPI):
     webhook_info = await bot.get_webhook_info()
-    create_main_tables()
+    OrmStart.create_tables()
     if webhook_info.url != WEBHOOK_URL:
         await bot.delete_webhook()
         await bot.set_webhook(url=WEBHOOK_URL)
