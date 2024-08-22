@@ -1,1 +1,1 @@
-Telegram bot (on aiogtam) for taking notes
+Telegram bot (on aiogram) for taking notes
